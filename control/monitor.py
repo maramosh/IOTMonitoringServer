@@ -53,13 +53,6 @@ def analyze_data():
 
         if alert:
             message = "ALERT {} {} {} {}".format(variable, additional_message, min_value, max_value)
-
-            if variable == "Temperatura" and item["check_value"] > max_value:
-                # Check if humidity is also low
-                humidity_item = next((x for x in aggregation if x["measurement__name"] == "Humedad"), None)
-                if humidity_item and humidity_item["check_value"] < min_value:
-                    message = "ALERT Incendio: Temperatura alta y Humedad baja {} {}".format(min_value, max_value)
-
             topic = '{}/{}/{}/{}/in'.format(country, state, city, user)
             print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
             client.publish(topic, message)
@@ -67,6 +60,56 @@ def analyze_data():
 
     print(len(aggregation), "dispositivos revisados")
     print(alerts, "alertas enviadas")
+
+
+
+def analyze_fire():
+        # Consulta todos los datos de la última hora, los agrupa por estación y variable
+    # Compara el promedio con los valores límite que están en la base de datos para esa variable.
+    # Si el promedio se excede de los límites, se envia un mensaje de alerta.
+
+    print("Calculando alertas...")
+
+    data = Data.objects.filter(
+        base_time__gte=datetime.now() - timedelta(minutes=5))
+    aggregation = data.annotate(check_value=Avg('avg_value')) \
+        .select_related('station', 'measurement') \
+        .select_related('station__user', 'station__location') \
+        .select_related('station__location__city', 'station__location__state',
+                        'station__location__country') \
+        .values('check_value', 'station__user__username',
+                'measurement__name',
+                'measurement__max_value',
+                'measurement__min_value',
+                'station__location__city__name',
+                'station__location__state__name',
+                'station__location__country__name')
+    
+    humidity_item = None
+    temperature_item = None
+    for item in aggregation:
+        if item["measurement__name"] == "humedad":
+            humidity_item = item
+            break
+        if item['measurement__name'] == "temperatura":
+            temperature_item = item
+            break
+
+    if humidity_item and temperature_item:
+        alert = False
+
+        if humidity_item['check_value'] > humidity_item['measurement__min_value'] and temperature_item['check_value'] > temperature_item['measurement__max_value']:
+            alert = True
+            additional_message = "INCENDIO DETECTADO"
+
+        if alert:
+            message = "ALERT {}".format(additional_message)
+            topic = '{}/{}/{}/{}/in'.format(humidity_item['station__location__country__name'], humidity_item['station__location__state__name'], humidity_item['station__location__city__name'], humidity_item['station__user__username'])
+            print(datetime.now(), "Sending alert to fire prevention {}".format(topic))
+            client.publish(topic, message)
+    
+
+    print(len(aggregation), "dispositivos revisados")
 
 
 def on_connect(client, userdata, flags, rc):
@@ -115,7 +158,8 @@ def start_cron():
     Inicia el cron que se encarga de ejecutar la función analyze_data cada 5 minutos.
     '''
     print("Iniciando cron...")
-    schedule.every(0.3).minutes.do(analyze_data)
+    schedule.every(3).minutes.do(analyze_data)
+    schedule.every(0.2).minutes.do(analyze_fire)
     print("Servicio de control iniciado")
     while 1:
         schedule.run_pending()

@@ -113,6 +113,7 @@ def analyze_fire():
 
     print(len(aggregation), "dispositivos revisados")
     print(alerts, "alertas de fuego enviadas")
+    print(humidity_item['check_value'], temperature_item['check_value'], 'Datos')
 
 
 def on_connect(client, userdata, flags, rc):

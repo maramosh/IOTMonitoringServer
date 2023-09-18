@@ -64,10 +64,6 @@ def analyze_data():
 
 
 def analyze_fire():
-        # Consulta todos los datos de la última hora, los agrupa por estación y variable
-    # Compara el promedio con los valores límite que están en la base de datos para esa variable.
-    # Si el promedio se excede de los límites, se envia un mensaje de alerta.
-
     print("Detectando incendios...")
 
     data = Data.objects.filter(
@@ -88,11 +84,12 @@ def analyze_fire():
     alerts = 0
     humidity_item = None
     temperature_item = None
+    
     for item in aggregation:
-        print(item['measurement__name'], 'NOMBRE')
         if item["measurement__name"] == "humedad":
             humidity_item = item
             break
+    for item in aggregation:
         if item['measurement__name'] == "temperatura":
             temperature_item = item
             break

@@ -93,6 +93,8 @@ def analyze_fire():
         if item['measurement__name'] == "temperatura":
             temperature_item = item
             break
+        
+    print(humidity_item, temperature_item)
 
     if humidity_item and temperature_item:
         alert = False

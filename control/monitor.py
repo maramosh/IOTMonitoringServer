@@ -93,13 +93,13 @@ def analyze_fire():
         if item['measurement__name'] == "temperatura":
             temperature_item = item
             break
-        
+
     print(humidity_item, temperature_item)
 
     if humidity_item and temperature_item:
         alert = False
 
-        if humidity_item['check_value'] > humidity_item['measurement__min_value'] and temperature_item['check_value'] > temperature_item['measurement__max_value']:
+        if humidity_item['check_value'] < humidity_item['measurement__min_value'] and temperature_item['check_value'] > temperature_item['measurement__max_value']:
             alert = True
             additional_message = "INCENDIO DETECTADO"
 

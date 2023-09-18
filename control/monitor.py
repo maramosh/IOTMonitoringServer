@@ -85,6 +85,7 @@ def analyze_fire():
                 'station__location__state__name',
                 'station__location__country__name')
     
+    alerts = 0
     humidity_item = None
     temperature_item = None
     for item in aggregation:
@@ -107,9 +108,11 @@ def analyze_fire():
             topic = '{}/{}/{}/{}/in'.format(humidity_item['station__location__country__name'], humidity_item['station__location__state__name'], humidity_item['station__location__city__name'], humidity_item['station__user__username'])
             print(datetime.now(), "Sending alert to fire prevention {}".format(topic))
             client.publish(topic, message)
+            alerts += 1
     
 
     print(len(aggregation), "dispositivos revisados")
+    print(alerts, "alertas de fuego enviadas")
 
 
 def on_connect(client, userdata, flags, rc):

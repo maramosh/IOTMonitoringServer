@@ -67,7 +67,7 @@ def analyze_fire():
     print("Detectando incendios...")
 
     data = Data.objects.filter(
-        base_time__gte=datetime.now() - timedelta(minutes=5))
+        base_time__gte=datetime.now() - timedelta(hours=1))
     aggregation = data.annotate(check_value=Avg('avg_value')) \
         .select_related('station', 'measurement') \
         .select_related('station__user', 'station__location') \
@@ -84,7 +84,7 @@ def analyze_fire():
     alerts = 0
     humidity_item = None
     temperature_item = None
-    
+
     for item in aggregation:
         if item["measurement__name"] == "humedad":
             humidity_item = item

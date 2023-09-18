@@ -53,6 +53,13 @@ def analyze_data():
 
         if alert:
             message = "ALERT {} {} {} {}".format(variable, additional_message, min_value, max_value)
+
+            if variable == "Temperatura" and item["check_value"] > max_value:
+                # Check if humidity is also low
+                humidity_item = next((x for x in aggregation if x["measurement__name"] == "Humedad"), None)
+                if humidity_item and humidity_item["check_value"] < min_value:
+                    message = "ALERT Incendio: Temperatura alta y Humedad baja {} {}".format(min_value, max_value)
+
             topic = '{}/{}/{}/{}/in'.format(country, state, city, user)
             print(datetime.now(), "Sending alert to {} {}".format(topic, variable))
             client.publish(topic, message)
